@@ -187,7 +187,6 @@ send "1\r"
 interact
 EOF
 
-
     echo ""
     echo "======================================"
     echo "        Node Token Setup"
@@ -196,16 +195,13 @@ EOF
 
     read -p "Enter Generated Node Token: " NODE_TOKEN
 
-    # Save token (optional)
     echo "$NODE_TOKEN" > /etc/pterodactyl/node_token.txt
 
-    echo ""
     echo "⚙️ Starting Wings..."
 
     systemctl start wings
     systemctl enable wings
 
-    echo ""
     echo "✅ Node Setup Completed!"
 
 fi
