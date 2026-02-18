@@ -1,0 +1,96 @@
+#!/bin/bash
+
+clear
+
+echo "======================================"
+echo "      🚀 Veltrion Hosting Installer"
+echo "======================================"
+echo ""
+echo "1) Motd Setup"
+echo ""
+read -p "Select an option [1-1]: " main_choice
+
+if [ "$main_choice" == "1" ]; then
+    clear
+    echo "======================================"
+    echo "           Motd Setup"
+    echo "======================================"
+    echo ""
+    echo "1) Debian"
+    echo "2) Ubuntu"
+    echo ""
+    read -p "Select an option [1-2]: " motd_choice
+
+    if [ "$motd_choice" == "1" ]; then
+        echo "⚙️ Setting up MOTD for Debian..."
+
+        # Install required packages
+        apt update -y
+        apt install -y curl pciutils
+
+        # Backup profile (safety)
+        cp /etc/profile /etc/profile.backup
+
+        # Append MOTD (DO NOT overwrite)
+        cat << 'EOF' >> /etc/profile
+
+clear
+
+# ==== SYSTEM INFO FETCH ====
+
+OS_NAME=$(grep PRETTY_NAME /etc/os-release | cut -d= -f2 | tr -d '"')
+CPU_MODEL=$(lscpu | awk -F: '/Model name/ {print $2}' | sed 's/^ *//' | grep -v "i440fx" | head -n 1)
+CPU_CORES=$(nproc)
+GPU_INFO=$(lspci | grep -i 'vga\|3d\|2d' | awk -F': ' '{print $2}' | head -n 1)
+
+HOSTNAME=$(hostname)
+UPTIME=$(uptime -p)
+
+RAM_USED=$(free -m | awk '/Mem:/ {printf "%.1f", $3/1024}')
+RAM_TOTAL=$(free -m | awk '/Mem:/ {printf "%.1f", $2/1024}')
+
+DISK_USED=$(df -h / | awk 'NR==2 {print $3}')
+DISK_TOTAL=$(df -h / | awk 'NR==2 {print $2}')
+
+IPV4=$(curl -4 -s ifconfig.me 2>/dev/null)
+IPV6=$(curl -6 -s ifconfig.me 2>/dev/null)
+
+# ==== BANNER ====
+
+echo "██╗   ██╗███████╗██╗  ████████╗██████╗ ██╗ ██████╗ ███╗   ██╗    ██╗  ██╗ ██████╗ ███████╗████████╗██╗███╗   ██╗ ██████╗ "
+echo "██║   ██║██╔════╝██║  ╚══██╔══╝██╔══██╗██║██╔═══██╗████╗  ██║    ██║  ██║██╔═══██╗██╔════╝╚══██╔══╝██║████╗  ██║██╔════╝"
+echo "██║   ██║█████╗  ██║     ██║   ██████╔╝██║██║   ██║██╔██╗ ██║    ███████║██║   ██║███████╗   ██║   ██║██╔██╗ ██║██║  ███╗"
+echo "╚██╗ ██╔╝██╔══╝  ██║     ██║   ██╔══██╗██║██║   ██║██║╚██╗██║    ██╔══██║██║   ██║╚════██║   ██║   ██║██║╚██╗██║██║   ██║"
+echo " ╚████╔╝ ███████╗███████╗██║   ██║  ██║██║╚██████╔╝██║ ╚████║    ██║  ██║╚██████╔╝███████║   ██║   ██║██║ ╚████║╚██████╔╝"
+echo "  ╚═══╝  ╚══════╝╚══════╝╚═╝   ╚═╝  ╚═╝╚═╝ ╚═════╝ ╚═╝  ╚═══╝    ╚═╝  ╚═╝ ╚═════╝ ╚══════╝   ╚═╝   ╚═╝╚═╝  ╚═══╝ ╚═════╝ "
+echo ""
+echo " OS        : $OS_NAME"
+echo " Hosted on : Veltrion Hosting"
+echo " Processor : $CPU_MODEL"
+echo " Cores     : $CPU_CORES"
+echo " GPU       : ${GPU_INFO:-Not detected}"
+echo " Hostname  : $HOSTNAME"
+echo " Uptime    : $UPTIME"
+echo " RAM       : ${RAM_USED}GB / ${RAM_TOTAL}GB"
+echo " Disk      : $DISK_USED / $DISK_TOTAL"
+echo " IPv4      : ${IPV4:-Not detected}"
+echo " IPv6      : ${IPV6:-Not detected}"
+echo ""
+
+EOF
+
+        # Modify SSH config safely (append only)
+        echo "" >> /etc/ssh/sshd_config
+        echo "PrintLastLog no" >> /etc/ssh/sshd_config
+
+        # Restart SSH
+        systemctl restart ssh || systemctl restart sshd
+
+        echo "✅ MOTD Setup Completed for Debian!"
+
+    elif [ "$motd_choice" == "2" ]; then
+        echo "⚠️ Ubuntu setup coming next..."
+    else
+        echo "❌ Invalid option"
+    fi
+fi
