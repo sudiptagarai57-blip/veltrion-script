@@ -178,7 +178,15 @@ elif [ "$main_choice" == "2" ]; then
     sleep 2
 
     # Run installer
-    printf "1\n" | bash <(curl -s https://pterodactyl-installer.se)
+    apt install expect -y
+
+    expect <<EOF
+    spawn bash <(curl -s https://pterodactyl-installer.se)
+    expect "Input 0-6:"
+    send "1\r"
+    interact
+    EOF
+
 
     echo ""
     echo "======================================"
