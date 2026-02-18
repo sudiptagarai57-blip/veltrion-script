@@ -173,16 +173,12 @@ elif [ "$main_choice" == "2" ]; then
     echo "======================================"
     echo ""
 
-    echo "⚙️ Running Pterodactyl Installer..."
-    echo ""
-    echo "👉 When prompted:"
-    echo "Select: 1 (Install Panel/Node)"
-    echo ""
+    echo "⚙️ Running Pterodactyl Node Installer..."
 
-    sleep 3
+    sleep 2
 
     # Run installer
-    bash <(curl -s https://pterodactyl-installer.se)
+    printf "1\n" | bash <(curl -s https://pterodactyl-installer.se)
 
     echo ""
     echo "======================================"
