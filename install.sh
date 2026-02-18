@@ -8,6 +8,7 @@ echo "======================================"
 echo ""
 echo "1) Motd Setup"
 echo "2) Node Setup"
+echo "3) Mirror Change"
 echo ""
 read -p "Select an option [1-2]: " main_choice
 
@@ -203,5 +204,28 @@ elif [ "$main_choice" == "2" ]; then
 
     echo ""
     echo "✅ Node Setup Completed!"
+
+elif [ "$main_choice" == "3" ]; then
+    clear
+    echo "======================================"
+    echo "        🌐 Mirror Change (India)"
+    echo "======================================"
+    echo ""
+
+    echo "⚙️ Updating APT mirrors to India..."
+
+    # Backup original file
+    cp /etc/apt/sources.list /etc/apt/sources.list.backup
+
+    # Replace de. with in.
+    sed -i 's|http://de.|http://in.|g' /etc/apt/sources.list
+    sed -i 's|https://de.|https://in.|g' /etc/apt/sources.list
+
+    echo ""
+    echo "🔄 Updating package lists..."
+    apt update -y
+
+    echo ""
+    echo "✅ Mirror changed to India (in.) successfully!"
 
 fi
