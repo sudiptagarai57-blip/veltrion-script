@@ -9,8 +9,9 @@ echo ""
 echo "1) Motd Setup"
 echo "2) Node Setup"
 echo "3) Mirror Change"
+echo "4) VPS Login Setup"
 echo ""
-read -p "Select an option [1-2]: " main_choice
+read -p "Select an option [1-4]: " main_choice
 
 if [ "$main_choice" == "1" ]; then
     clear
@@ -228,4 +229,63 @@ elif [ "$main_choice" == "3" ]; then
     echo ""
     echo "✅ Mirror changed to India (in.) successfully!"
 
+    elif [ "$main_choice" == "4" ]; then
+    clear
+    echo "======================================"
+    echo "        🔐 VPS Login Setup"
+    echo "======================================"
+    echo ""
+    echo "1) Root Pass Setup"
+    echo "2) Key Setup"
+    echo ""
+
+    read -p "Select an option [1-2]: " login_choice
+
+    # ================= ROOT PASSWORD SETUP =================
+    if [ "$login_choice" == "1" ]; then
+        echo "⚙️ Setting up Root Password Login..."
+
+        apt update -y
+        apt install --reinstall openssh-server -y
+
+        mv /etc/ssh/sshd_config /etc/ssh/sshd_config.bak 2>/dev/null
+
+        echo -e "Port 22
+PermitRootLogin yes
+PasswordAuthentication yes
+ChallengeResponseAuthentication no
+UsePAM yes
+X11Forwarding yes
+PrintMotd no
+Subsystem sftp /usr/lib/openssh/sftp-server" | tee /etc/ssh/sshd_config > /dev/null
+
+        systemctl enable ssh
+        systemctl restart ssh
+
+        echo ""
+        echo "✅ SSH configured. Now set root password:"
+        passwd
+
+    # ================= SSH KEY SETUP =================
+    elif [ "$login_choice" == "2" ]; then
+        echo "⚙️ Setting up SSH Key Authentication..."
+
+        mkdir -p ~/.ssh
+        chmod 700 ~/.ssh
+
+        echo ""
+        echo "Paste your SSH Public Key:"
+        read -p "> " SSH_KEY
+
+        echo "$SSH_KEY" > ~/.ssh/authorized_keys
+        chmod 600 ~/.ssh/authorized_keys
+
+        systemctl restart ssh
+
+        echo ""
+        echo "✅ SSH Key added successfully!"
+
+    else
+        echo "❌ Invalid option"
+    fi
 fi
