@@ -177,11 +177,11 @@ elif [ "$main_choice" == "2" ]; then
 
     sleep 2
 
-    # Run installer
-    apt install expect -y
+    apt update -y
+    apt install -y expect
 
     expect <<EOF
-    spawn bash <(curl -s https://pterodactyl-installer.se)
+    spawn bash -c "bash <(curl -s https://pterodactyl-installer.se)"
     expect "Input 0-6:"
     send "1\r"
     interact
