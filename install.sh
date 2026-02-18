@@ -174,18 +174,13 @@ elif [ "$main_choice" == "2" ]; then
     echo ""
 
     echo "⚙️ Running Pterodactyl Node Installer..."
+    echo "👉 Follow the installer and complete all steps"
+    echo ""
 
     sleep 2
 
-    apt update -y
-    apt install -y expect
-
-expect <<EOF
-spawn bash -c "bash <(curl -s https://pterodactyl-installer.se)"
-expect "Input 0-6:"
-send "1\r"
-expect eof
-EOF
+    # Run installer normally (no expect)
+    bash <(curl -s https://pterodactyl-installer.se)
 
     echo ""
     echo "======================================"
