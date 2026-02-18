@@ -7,8 +7,9 @@ echo "      🚀 Veltrion Hosting Installer"
 echo "======================================"
 echo ""
 echo "1) Motd Setup"
+echo "2) Node Setup"
 echo ""
-read -p "Select an option [1-1]: " main_choice
+read -p "Select an option [1-2]: " main_choice
 
 if [ "$main_choice" == "1" ]; then
     clear
@@ -164,4 +165,43 @@ EOF
         echo "❌ Invalid option"
 
     fi
+
+elif [ "$main_choice" == "2" ]; then
+    clear
+    echo "======================================"
+    echo "        🚀 Node Setup (Pterodactyl)"
+    echo "======================================"
+    echo ""
+
+    echo "⚙️ Running Pterodactyl Installer..."
+    echo ""
+    echo "👉 When prompted:"
+    echo "Select: 1 (Install Panel/Node)"
+    echo ""
+
+    sleep 3
+
+    # Run installer
+    bash <(curl -s https://pterodactyl-installer.se)
+
+    echo ""
+    echo "======================================"
+    echo "        Node Token Setup"
+    echo "======================================"
+    echo ""
+
+    read -p "Enter Generated Node Token: " NODE_TOKEN
+
+    # Save token (optional)
+    echo "$NODE_TOKEN" > /etc/pterodactyl/node_token.txt
+
+    echo ""
+    echo "⚙️ Starting Wings..."
+
+    systemctl start wings
+    systemctl enable wings
+
+    echo ""
+    echo "✅ Node Setup Completed!"
+
 fi
