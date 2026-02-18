@@ -184,24 +184,29 @@ expect <<EOF
 spawn bash -c "bash <(curl -s https://pterodactyl-installer.se)"
 expect "Input 0-6:"
 send "1\r"
-interact
+expect eof
 EOF
 
     echo ""
     echo "======================================"
-    echo "        Node Token Setup"
+    echo "        Node Configuration"
     echo "======================================"
     echo ""
 
-    read -p "Enter Generated Node Token: " NODE_TOKEN
+    echo "Paste your Wings configuration command:"
+    read -p "> " USER_COMMAND
 
-    echo "$NODE_TOKEN" > /etc/pterodactyl/node_token.txt
+    echo ""
+    echo "⚙️ Executing command..."
+    bash -c "$USER_COMMAND"
 
+    echo ""
     echo "⚙️ Starting Wings..."
 
     systemctl start wings
     systemctl enable wings
 
+    echo ""
     echo "✅ Node Setup Completed!"
 
 fi
