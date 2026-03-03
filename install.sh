@@ -10,8 +10,9 @@ echo "1) Motd Setup"
 echo "2) Node Setup"
 echo "3) Mirror Change"
 echo "4) VPS Login Setup"
+echo "5) Autobackup Setup"
 echo ""
-read -p "Select an option [1-4]: " main_choice
+read -p "Select an option [1-5]: " main_choice
 
 if [ "$main_choice" == "1" ]; then
     clear
@@ -284,6 +285,160 @@ Subsystem sftp /usr/lib/openssh/sftp-server" | tee /etc/ssh/sshd_config > /dev/n
 
         echo ""
         echo "✅ SSH Key added successfully!"
+
+    else
+        echo "❌ Invalid option"
+    fi
+
+    elif [ "$main_choice" == "5" ]; then
+    clear
+    echo "======================================"
+    echo "        💾 Autobackup Setup"
+    echo "======================================"
+    echo ""
+    echo "1) Rclone Setup"
+    echo "2) Backup Setup"
+    echo ""
+    read -p "Select an option [1-2]: " backup_choice
+
+    # ================= RCLONE SETUP =================
+    if [ "$backup_choice" == "1" ]; then
+        echo "⚙️ Installing Rclone..."
+
+        sudo apt update
+        sudo apt install unzip -y
+        curl https://rclone.org/install.sh | sudo bash
+
+        echo ""
+        echo "⚙️ Starting Rclone Config..."
+        echo "Follow these steps:"
+        echo "n"
+        echo "gdrive"
+        echo "24"
+        echo "Press Enter (client id blank)"
+        echo "Press Enter (client secret blank)"
+        echo "1"
+        echo "Press Enter"
+        echo "n"
+        echo "n"
+        echo "Paste your token JSON"
+        echo "n"
+        echo "y"
+        echo "q"
+        echo ""
+
+        rclone config
+
+        echo ""
+        echo "✅ Rclone Setup Completed!"
+
+
+    # ================= ENTERPRISE BACKUP SETUP =================
+    elif [ "$backup_choice" == "2" ]; then
+        clear
+        echo "======================================"
+        echo "        🚀 Enterprise Backup Setup"
+        echo "======================================"
+        echo ""
+
+        read -p "Enter Node Name (e.g. BudgetNode1): " NODE_NAME_INPUT
+        read -p "Enter Category (e.g. Budget/Performance): " CATEGORY_INPUT
+
+        echo ""
+        echo "⚙️ Installing Enterprise Backup Script..."
+
+        cat << EOF > /root/veltrion-enterprise-backup.sh
+#!/bin/bash
+
+# ==============================
+# Veltrion Enterprise Backup
+# ==============================
+
+NODE_NAME="$NODE_NAME_INPUT"
+CATEGORY="$CATEGORY_INPUT"
+SOURCE_DIR="/var/lib/pterodactyl"
+DATE=\$(date +"%Y-%m-%d")
+DRIVE_PATH="gdrive:Veltrion/Node/\$CATEGORY/\$NODE_NAME/\$DATE"
+
+LOG_FILE="/root/enterprise-backup.log"
+
+echo "===== Veltrion Enterprise Backup Starting =====" | tee -a \$LOG_FILE
+
+# CPU LOAD CHECK
+LOAD=\$(awk '{print \$1}' /proc/loadavg)
+CPU_CORES=\$(nproc)
+MAX_LOAD=\$(echo "\$CPU_CORES * 0.75" | bc)
+
+if (( \$(echo "\$LOAD > \$MAX_LOAD" | bc -l) )); then
+    echo "CPU load too high (\$LOAD). Aborting backup." | tee -a \$LOG_FILE
+    exit 1
+fi
+
+echo "CPU load OK (\$LOAD)" | tee -a \$LOG_FILE
+
+# AUTO BANDWIDTH DETECTION
+NIC=\$(ip route | grep default | awk '{print \$5}')
+SPEED=\$(cat /sys/class/net/\$NIC/speed 2>/dev/null)
+
+if [ -z "\$SPEED" ]; then
+    SPEED=100
+fi
+
+BW_LIMIT=\$(echo "\$SPEED * 0.20" | bc)
+BW_LIMIT_MB=\$(echo "\$BW_LIMIT / 8" | bc)
+
+if [ "\$BW_LIMIT_MB" -lt 5 ]; then
+    BW_LIMIT_MB=5
+fi
+
+echo "Detected NIC: \$NIC (\$SPEED Mbps)" | tee -a \$LOG_FILE
+echo "Using Upload Limit: \${BW_LIMIT_MB}M" | tee -a \$LOG_FILE
+
+command -v pv >/dev/null 2>&1 || apt install -y pv
+command -v bc >/dev/null 2>&1 || apt install -y bc
+
+# STREAM VOLUMES
+if [ -d "\$SOURCE_DIR/volumes" ]; then
+    echo "Streaming volumes..." | tee -a \$LOG_FILE
+    tar -cf - -C "\$SOURCE_DIR" volumes | \
+    rclone rcat "\$DRIVE_PATH/volumes-\$DATE.tar" \
+    --progress \
+    --bwlimit \${BW_LIMIT_MB}M \
+    --transfers 1 \
+    --checkers 1 \
+    --buffer-size 16M \
+    --drive-chunk-size 16M \
+    --low-level-retries 10 \
+    --retries 5
+fi
+
+# STREAM BACKUPS
+if [ -d "\$SOURCE_DIR/backups" ]; then
+    echo "Streaming backups..." | tee -a \$LOG_FILE
+    tar -cf - -C "\$SOURCE_DIR" backups | \
+    rclone rcat "\$DRIVE_PATH/backups-\$DATE.tar" \
+    --progress \
+    --bwlimit \${BW_LIMIT_MB}M \
+    --transfers 1 \
+    --checkers 1 \
+    --buffer-size 16M \
+    --drive-chunk-size 16M \
+    --low-level-retries 10 \
+    --retries 5
+fi
+
+echo "===== Veltrion Enterprise Backup Completed =====" | tee -a \$LOG_FILE
+EOF
+
+        chmod +x /root/veltrion-enterprise-backup.sh
+
+        echo ""
+        echo "⚙️ Setting Daily Cron (2 AM)..."
+
+        (crontab -l 2>/dev/null; echo "0 2 * * * /root/veltrion-enterprise-backup.sh >> /root/enterprise-backup.log 2>&1") | crontab -
+
+        echo ""
+        echo "✅ Enterprise Autobackup Installed Successfully!"
 
     else
         echo "❌ Invalid option"
